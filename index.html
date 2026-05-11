@@ -6,7 +6,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="购物清单" />
-  <link rel="apple-touch-icon" href="/icon.png" />
   <title>购物清单</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -482,6 +481,8 @@ let state = {
   editingBudget: false,
   budgetDraft: "",
   selectedColor: CARD_COLORS[0],
+  createName: "",
+  createNote: "",
 };
 
 function setState(patch) {
@@ -645,7 +646,7 @@ function renderCreateSheet() {
         <div class="sheet-title">新建商店</div>
         <div class="sheet-field">
           <div class="sheet-field-label">名称</div>
-          <input id="new-store-name" class="sheet-input" placeholder="例：家附近超市" />
+          <input id="new-store-name" class="sheet-input" placeholder="例：家附近超市" value="${esc(state.createName)}" />
         </div>
         <div class="sheet-field">
           <div class="sheet-field-label">卡片颜色</div>
@@ -653,9 +654,9 @@ function renderCreateSheet() {
         </div>
         <div class="sheet-field">
           <div class="sheet-field-label">备注 <span style="color:#ccc">（选填）</span></div>
-          <input id="new-store-note" class="sheet-input-sm" placeholder="例：只卖周末去" />
+          <input id="new-store-note" class="sheet-input-sm" placeholder="例：只卖周末去" value="${esc(state.createNote)}" />
         </div>
-        <button class="sheet-submit" id="btn-create-submit" style="background:#D0D0E0">创建</button>
+        <button class="sheet-submit" id="btn-create-submit" style="background:${state.createName.trim() ? '#1A1F6B' : '#D0D0E0'}">创建</button>
       </div>
     </div>`;
 }
@@ -748,26 +749,39 @@ function bindEvents() {
   const btnCreateSubmit = document.getElementById("btn-create-submit");
   const newStoreName = document.getElementById("new-store-name");
   if (createOverlay) createOverlay.addEventListener("click", e => {
-    if (!createPanel.contains(e.target)) setState({ showCreate: false, selectedColor: CARD_COLORS[0] });
+    if (!createPanel.contains(e.target)) setState({ showCreate: false, selectedColor: CARD_COLORS[0], createName: "", createNote: "" });
   });
 
-  // Color swatches
+  // Color swatches — save current input values before re-render
   document.querySelectorAll(".color-swatch").forEach(el => {
     el.addEventListener("click", e => {
       e.stopPropagation();
       const c = CARD_COLORS.find(c => c.id === el.dataset.colorid);
-      if (c) setState({ selectedColor: c });
+      if (c) {
+        const nameEl = document.getElementById("new-store-name");
+        const noteEl = document.getElementById("new-store-note");
+        setState({
+          selectedColor: c,
+          createName: nameEl ? nameEl.value : state.createName,
+          createNote: noteEl ? noteEl.value : state.createNote,
+        });
+      }
     });
   });
 
   // Store name input → enable/disable submit
   if (newStoreName) {
     newStoreName.addEventListener("input", e => {
+      state.createName = e.target.value;
       const btn = document.getElementById("btn-create-submit");
       if (btn) btn.style.background = e.target.value.trim() ? "#1A1F6B" : "#D0D0E0";
     });
     newStoreName.addEventListener("keydown", e => { if (e.key === "Enter") submitCreateStore(); });
-    setTimeout(() => newStoreName.focus(), 10);
+    setTimeout(() => { newStoreName.focus(); newStoreName.setSelectionRange(newStoreName.value.length, newStoreName.value.length); }, 10);
+  }
+  const newStoreNote = document.getElementById("new-store-note");
+  if (newStoreNote) {
+    newStoreNote.addEventListener("input", e => { state.createNote = e.target.value; });
   }
   if (btnCreateSubmit) btnCreateSubmit.addEventListener("click", submitCreateStore);
 }
@@ -820,10 +834,9 @@ function submitItem() {
 function submitCreateStore() {
   const nameEl = document.getElementById("new-store-name");
   const noteEl = document.getElementById("new-store-note");
-  if (!nameEl) return;
-  const name = nameEl.value.trim();
+  const name = (nameEl ? nameEl.value : state.createName).trim();
+  const note = (noteEl ? noteEl.value : state.createNote).trim();
   if (!name) return;
-  const note = noteEl ? noteEl.value.trim() : "";
   const newStore = {
     id: uid(), name, note,
     color: state.selectedColor,
@@ -831,7 +844,7 @@ function submitCreateStore() {
   };
   const stores = [...state.stores, newStore];
   saveStores(stores);
-  setState({ stores, showCreate: false, selectedColor: CARD_COLORS[0] });
+  setState({ stores, showCreate: false, selectedColor: CARD_COLORS[0], createName: "", createNote: "" });
 }
 
 function esc(str) {
