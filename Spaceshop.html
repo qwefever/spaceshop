@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="购物清单" />
+  <title>购物清单</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: #F7F7FB;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    button {
+      font-family: 'Noto Sans SC', sans-serif;
+      cursor: pointer;
+      border: none;
+    }
+    input {
+      font-family: 'Noto Sans SC', sans-serif;
+      border: none;
+      outline: none;
+    }
+
+    /* ═══════════════════════════════════════════
+       LAYOUT WRAPPER
+    ═══════════════════════════════════════════ */
+    #app {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ═══════════════════════════════════════════
+       HOME PAGE
+    ═══════════════════════════════════════════ */
+    .home-page {
+      min-height: 100vh;
+      background: #F7F7FB;
+      padding: 56px 18px 100px;
+    }
+    .home-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 22px;
+    }
+
+    /* ── Store card grid ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .store-card {
+      border-radius: 20px;
+      padding: 18px 16px 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      min-height: 130px;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .store-card:active {
+      transform: scale(0.97);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+    .store-card-name {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .store-card-note {
+      font-size: 11px;
+      opacity: 0.5;
+      margin-bottom: 6px;
+    }
+    .store-card-spacer {
+      flex: 1;
+    }
+    .store-card-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .store-card-stat {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    /* ═══════════════════════════════════════════
+       DETAIL PAGE
+    ═══════════════════════════════════════════ */
+    .detail-page {
+      min-height: 100vh;
+      background: #F7F7FB;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Back button row ── */
+    .detail-topbar {
+      padding: 52px 18px 10px;
+    }
+    .back-btn {
+      background: rgba(0,0,0,0.07);
+      border-radius: 12px;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a1a2e;
+    }
+    .back-btn:active {
+      background: rgba(0,0,0,0.13);
+    }
+
+    /* ── Floating store card ── */
+    .detail-card-wrap {
+      padding: 0 18px;
+    }
+    .detail-card {
+      border-radius: 24px;
+      padding: 20px 20px 22px;
+      position: relative;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    }
+    .detail-card-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      padding-right: 52px;
+      line-height: 1.2;
+    }
+    .detail-card-budget {
+      font-size: 14px;
+      opacity: 0.8;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .detail-card-budget-empty {
+      font-size: 14px;
+      opacity: 0.35;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+    }
+    .budget-input {
+      background: rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-size: 14px;
+      width: 100px;
+      color: inherit;
+    }
+
+    /* ── Complete button (capsule) ── */
+    .complete-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.10);
+      border-radius: 20px;
+      width: 44px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .complete-btn:active {
+      background: rgba(0,0,0,0.18);
+    }
+
+    /* ── Shopping list ── */
+    .item-list {
+      flex: 1;
+      padding: 16px 18px 100px;
+    }
+    .item-list-empty {
+      text-align: center;
+      color: #ccc;
+      margin-top: 60px;
+      font-size: 14px;
+    }
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid #F0F0F5;
+      cursor: pointer;
+    }
+    .item-row:active {
+      opacity: 0.6;
+    }
+    .item-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.8px solid #C8C8D8;
+      flex-shrink: 0;
+    }
+    .item-circle-checked {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #C8CAE8;
+      border: 1.8px solid #C8CAE8;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .item-name {
+      font-size: 16px;
+      color: #1a1a2e;
+    }
+    .item-name-checked {
+      font-size: 16px;
+      color: #1a1a2e;
+      text-decoration: line-through;
+    }
+    .item-row-checked {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid #F0F0F5;
+      cursor: pointer;
+      opacity: 0.4;
+    }
+
+    /* ═══════════════════════════════════════════
+       FAB (floating action button)
+    ═══════════════════════════════════════════ */
+    .fab {
+      position: fixed;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #1A1F6B;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(26,31,107,0.3);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .fab:active {
+      transform: translateX(-50%) scale(0.93);
+      box-shadow: 0 2px 10px rgba(26,31,107,0.2);
+    }
+
+    /* ═══════════════════════════════════════════
+       OVERLAY BACKDROP
+    ═══════════════════════════════════════════ */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+    }
+    .overlay-dark {
+      background: rgba(0,0,0,0.22);
+    }
+    .overlay-light {
+      background: rgba(0,0,0,0.12);
+    }
+
+    /* ═══════════════════════════════════════════
+       CONFIRM MODAL (center)
+    ═══════════════════════════════════════════ */
+    .modal-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 24px;
+      padding: 28px 24px 20px;
+      width: 88%;
+      max-width: 360px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.13);
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+    .modal-desc {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .modal-btn-cancel {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 14px;
+      background: #F0F0F5;
+      color: #555;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .modal-btn-confirm {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 14px;
+      background: #1A1F6B;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════
+       BOTTOM SHEETS (add item / create store)
+    ═══════════════════════════════════════════ */
+    .sheet-bottom {
+      display: flex;
+      align-items: flex-end;
+    }
+    .sheet-panel {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 40px;
+      width: 100%;
+      box-shadow: 0 -4px 30px rgba(0,0,0,0.08);
+    }
+    .sheet-label {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+    .sheet-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 18px;
+    }
+    .sheet-field-label {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+    .sheet-field {
+      margin-bottom: 14px;
+    }
+    .sheet-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #F4F4F8;
+      font-size: 15px;
+      color: #1a1a2e;
+      box-sizing: border-box;
+    }
+    .sheet-input-sm {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #F4F4F8;
+      font-size: 14px;
+      color: #1a1a2e;
+      box-sizing: border-box;
+    }
+    .sheet-input-lg {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: #F4F4F8;
+      font-size: 16px;
+      color: #1a1a2e;
+      box-sizing: border-box;
+    }
+    .sheet-submit {
+      width: 100%;
+      padding: 14px 0;
+      border-radius: 16px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 4px;
+      transition: background 0.2s;
+    }
+
+    /* ── Color picker ── */
+    .color-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .color-swatch {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border 0.15s;
+    }
+
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA & STORAGE
+// ═══════════════════════════════════════════
+const CARD_COLORS = [
+  { id: "lavender", bg: "#C8CAE8", text: "#2D2D4E" },
+  { id: "navy",     bg: "#1A1F6B", text: "#FFFFFF" },
+  { id: "pink",     bg: "#F2C4CE", text: "#4A2030" },
+  { id: "yellow",   bg: "#F5C842", text: "#3A2D00" },
+  { id: "sage",     bg: "#B8D4C0", text: "#1E3A28" },
+  { id: "peach",    bg: "#F5C4A0", text: "#4A2010" },
+  { id: "sky",      bg: "#A8D4F0", text: "#0A2A4A" },
+  { id: "lilac",    bg: "#D4B8F0", text: "#2A0A4A" },
+];
+
+function uid() { return Math.random().toString(36).slice(2); }
+
+function loadStores() {
+  try {
+    const raw = localStorage.getItem("shops_v1");
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return [];
+}
+
+function saveStores(stores) {
+  try { localStorage.setItem("shops_v1", JSON.stringify(stores)); } catch(e) {}
+}
+
+// ── SVG icons ──
+const SVG_BACK = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="13,4 7,10 13,16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SVG_PLUS = `<svg width="22" height="22" viewBox="0 0 20 20" fill="none"><line x1="10" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+const SVG_CHECK = (size, color) => `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none"><polyline points="2,8 6,12 14,4" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let state = {
+  stores: loadStores(),
+  currentStoreId: null,
+  showCreate: false,
+  showAddItem: false,
+  showConfirm: false,
+  editingBudget: false,
+  budgetDraft: "",
+  selectedColor: CARD_COLORS[0],
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function render() {
+  const app = document.getElementById("app");
+  const store = state.stores.find(s => s.id === state.currentStoreId);
+
+  let html = "";
+  if (store) {
+    html = renderDetail(store);
+  } else {
+    html = renderHome();
+  }
+
+  // Overlays
+  if (state.showConfirm)  html += renderConfirmModal();
+  if (state.showAddItem)  html += renderAddItemSheet();
+  if (state.showCreate)   html += renderCreateSheet();
+
+  app.innerHTML = html;
+  bindEvents();
+}
+
+// ═══════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════
+function renderHome() {
+  const sorted = [...state.stores].sort((a,b) => b.completions - a.completions);
+  const cards = sorted.map(s => {
+    const pending = s.items.filter(i => !i.checked).length;
+    const noteHtml = s.note ? `<div class="store-card-note" style="color:${s.color.text}">${esc(s.note)}</div>` : "";
+    const budgetHtml = s.budget != null ? `<span class="store-card-stat" style="color:${s.color.text}">$${s.budget}</span>` : "";
+    return `
+      <div class="store-card" data-storeid="${s.id}" style="background:${s.color.bg}">
+        <div class="store-card-name" style="color:${s.color.text}">${esc(s.name)}</div>
+        ${noteHtml}
+        <div class="store-card-spacer"></div>
+        <div class="store-card-stats">
+          <span class="store-card-stat" style="color:${s.color.text}">${pending} 件待购</span>
+          ${budgetHtml}
+        </div>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="home-page">
+      <div class="home-title">我的商店</div>
+      <div class="card-grid">${cards}</div>
+      <button class="fab" id="btn-add-store">${SVG_PLUS}</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════
+// DETAIL
+// ═══════════════════════════════════════════
+function renderDetail(store) {
+  const c = store.color;
+  const unchecked = store.items.filter(i => !i.checked);
+  const checked   = store.items.filter(i => i.checked);
+
+  // Budget area
+  let budgetHtml;
+  if (state.editingBudget) {
+    budgetHtml = `
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+        <span style="font-size:13px;color:${c.text};opacity:0.6">$</span>
+        <input id="budget-input" class="budget-input" style="color:${c.text}"
+          value="${esc(state.budgetDraft)}" placeholder="输入预算" inputmode="decimal" />
+      </div>`;
+  } else {
+    if (store.budget != null) {
+      budgetHtml = `<div class="detail-card-budget" id="budget-tap" style="color:${c.text}">预算 $${store.budget}</div>`;
+    } else {
+      budgetHtml = `<div class="detail-card-budget-empty" id="budget-tap" style="color:${c.text}">— 点击设置预算</div>`;
+    }
+  }
+
+  // Items
+  const uncheckedHtml = unchecked.map(item => `
+    <div class="item-row" data-itemid="${item.id}">
+      <div class="item-circle"></div>
+      <span class="item-name">${esc(item.name)}</span>
+    </div>`).join("");
+
+  const checkedHtml = checked.map(item => `
+    <div class="item-row-checked" data-itemid="${item.id}">
+      <div class="item-circle-checked">${SVG_CHECK(11,"#3D3F7A")}</div>
+      <span class="item-name-checked">${esc(item.name)}</span>
+    </div>`).join("");
+
+  const emptyHtml = store.items.length === 0
+    ? `<div class="item-list-empty">清单是空的，点击 + 添加商品</div>` : "";
+
+  return `
+    <div class="detail-page">
+      <div class="detail-topbar">
+        <button class="back-btn" id="btn-back">${SVG_BACK}</button>
+      </div>
+      <div class="detail-card-wrap">
+        <div class="detail-card" style="background:${c.bg}">
+          <button class="complete-btn" id="btn-complete">${SVG_CHECK(15, c.text)}</button>
+          <div class="detail-card-name" style="color:${c.text}">${esc(store.name)}</div>
+          ${budgetHtml}
+        </div>
+      </div>
+      <div class="item-list">
+        ${emptyHtml}
+        ${uncheckedHtml}
+        ${checkedHtml}
+      </div>
+      <button class="fab" id="btn-add-item">${SVG_PLUS}</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════
+// MODALS & SHEETS
+// ═══════════════════════════════════════════
+function renderConfirmModal() {
+  return `
+    <div class="overlay overlay-dark modal-center" id="confirm-overlay">
+      <div class="modal-box">
+        <div class="modal-title">完成本次购物？</div>
+        <div class="modal-desc">已勾选的商品将被清除，未勾选的商品保留，本次预算将清零。</div>
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" id="btn-confirm-cancel">取消</button>
+          <button class="modal-btn-confirm" id="btn-confirm-ok">确认完成</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderAddItemSheet() {
+  return `
+    <div class="overlay overlay-light sheet-bottom" id="add-item-overlay">
+      <div class="sheet-panel" id="add-item-panel">
+        <div class="sheet-label">添加商品</div>
+        <input id="new-item-input" class="sheet-input-lg" placeholder="商品名称" />
+        <button class="sheet-submit" id="btn-item-submit" style="background:#1A1F6B;margin-top:12px">添加</button>
+      </div>
+    </div>`;
+}
+
+function renderCreateSheet() {
+  const swatches = CARD_COLORS.map(c => {
+    const selected = state.selectedColor.id === c.id;
+    const border = selected ? `2.5px solid ${c.text}` : "2.5px solid transparent";
+    const check = selected ? SVG_CHECK(14, c.text) : "";
+    return `<div class="color-swatch" data-colorid="${c.id}" style="background:${c.bg};border:${border}">${check}</div>`;
+  }).join("");
+
+  return `
+    <div class="overlay overlay-light sheet-bottom" id="create-overlay">
+      <div class="sheet-panel" id="create-panel">
+        <div class="sheet-title">新建商店</div>
+        <div class="sheet-field">
+          <div class="sheet-field-label">名称</div>
+          <input id="new-store-name" class="sheet-input" placeholder="例：家附近超市" />
+        </div>
+        <div class="sheet-field">
+          <div class="sheet-field-label">卡片颜色</div>
+          <div class="color-picker">${swatches}</div>
+        </div>
+        <div class="sheet-field">
+          <div class="sheet-field-label">备注 <span style="color:#ccc">（选填）</span></div>
+          <input id="new-store-note" class="sheet-input-sm" placeholder="例：只卖周末去" />
+        </div>
+        <button class="sheet-submit" id="btn-create-submit" style="background:#D0D0E0">创建</button>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════
+// EVENT BINDING
+// ═══════════════════════════════════════════
+function bindEvents() {
+  // Home: open store
+  document.querySelectorAll(".store-card").forEach(el => {
+    el.addEventListener("click", () => {
+      setState({ currentStoreId: el.dataset.storeid });
+    });
+  });
+
+  // Home: add store button
+  const btnAddStore = document.getElementById("btn-add-store");
+  if (btnAddStore) btnAddStore.addEventListener("click", () => setState({ showCreate: true }));
+
+  // Detail: back
+  const btnBack = document.getElementById("btn-back");
+  if (btnBack) btnBack.addEventListener("click", () => setState({ currentStoreId: null, editingBudget: false }));
+
+  // Detail: complete
+  const btnComplete = document.getElementById("btn-complete");
+  if (btnComplete) btnComplete.addEventListener("click", () => setState({ showConfirm: true }));
+
+  // Detail: toggle item
+  document.querySelectorAll("[data-itemid]").forEach(el => {
+    el.addEventListener("click", () => toggleItem(el.dataset.itemid));
+  });
+
+  // Detail: budget tap
+  const budgetTap = document.getElementById("budget-tap");
+  if (budgetTap) budgetTap.addEventListener("click", () => {
+    const store = state.stores.find(s => s.id === state.currentStoreId);
+    setState({ editingBudget: true, budgetDraft: store.budget ? String(store.budget) : "" });
+    setTimeout(() => {
+      const inp = document.getElementById("budget-input");
+      if (inp) { inp.focus(); inp.select(); }
+    }, 10);
+  });
+
+  // Detail: budget input
+  const budgetInput = document.getElementById("budget-input");
+  if (budgetInput) {
+    budgetInput.addEventListener("input", e => { state.budgetDraft = e.target.value; });
+    budgetInput.addEventListener("blur", commitBudget);
+    budgetInput.addEventListener("keydown", e => { if (e.key === "Enter") commitBudget(); });
+    setTimeout(() => { budgetInput.focus(); budgetInput.select(); }, 10);
+  }
+
+  // Detail: add item button
+  const btnAddItem = document.getElementById("btn-add-item");
+  if (btnAddItem) btnAddItem.addEventListener("click", () => {
+    setState({ showAddItem: true });
+    setTimeout(() => {
+      const inp = document.getElementById("new-item-input");
+      if (inp) inp.focus();
+    }, 10);
+  });
+
+  // Confirm modal
+  const btnConfirmCancel = document.getElementById("btn-confirm-cancel");
+  const btnConfirmOk = document.getElementById("btn-confirm-ok");
+  const confirmOverlay = document.getElementById("confirm-overlay");
+  if (btnConfirmCancel) btnConfirmCancel.addEventListener("click", () => setState({ showConfirm: false }));
+  if (btnConfirmOk) btnConfirmOk.addEventListener("click", completeShop);
+  if (confirmOverlay) confirmOverlay.addEventListener("click", e => {
+    if (e.target === confirmOverlay) setState({ showConfirm: false });
+  });
+
+  // Add item sheet
+  const addItemOverlay = document.getElementById("add-item-overlay");
+  const addItemPanel = document.getElementById("add-item-panel");
+  const newItemInput = document.getElementById("new-item-input");
+  const btnItemSubmit = document.getElementById("btn-item-submit");
+  if (addItemOverlay) addItemOverlay.addEventListener("click", e => {
+    if (!addItemPanel.contains(e.target)) setState({ showAddItem: false });
+  });
+  if (btnItemSubmit) btnItemSubmit.addEventListener("click", submitItem);
+  if (newItemInput) {
+    newItemInput.addEventListener("keydown", e => { if (e.key === "Enter") submitItem(); });
+    setTimeout(() => newItemInput.focus(), 10);
+  }
+
+  // Create sheet
+  const createOverlay = document.getElementById("create-overlay");
+  const createPanel = document.getElementById("create-panel");
+  const btnCreateSubmit = document.getElementById("btn-create-submit");
+  const newStoreName = document.getElementById("new-store-name");
+  if (createOverlay) createOverlay.addEventListener("click", e => {
+    if (!createPanel.contains(e.target)) setState({ showCreate: false, selectedColor: CARD_COLORS[0] });
+  });
+
+  // Color swatches
+  document.querySelectorAll(".color-swatch").forEach(el => {
+    el.addEventListener("click", e => {
+      e.stopPropagation();
+      const c = CARD_COLORS.find(c => c.id === el.dataset.colorid);
+      if (c) setState({ selectedColor: c });
+    });
+  });
+
+  // Store name input → enable/disable submit
+  if (newStoreName) {
+    newStoreName.addEventListener("input", e => {
+      const btn = document.getElementById("btn-create-submit");
+      if (btn) btn.style.background = e.target.value.trim() ? "#1A1F6B" : "#D0D0E0";
+    });
+    newStoreName.addEventListener("keydown", e => { if (e.key === "Enter") submitCreateStore(); });
+    setTimeout(() => newStoreName.focus(), 10);
+  }
+  if (btnCreateSubmit) btnCreateSubmit.addEventListener("click", submitCreateStore);
+}
+
+// ═══════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════
+function toggleItem(itemId) {
+  const stores = state.stores.map(s => {
+    if (s.id !== state.currentStoreId) return s;
+    return { ...s, items: s.items.map(i => i.id === itemId ? { ...i, checked: !i.checked } : i) };
+  });
+  saveStores(stores);
+  setState({ stores });
+}
+
+function commitBudget() {
+  if (!state.editingBudget) return;
+  const n = parseFloat(state.budgetDraft);
+  const budget = isNaN(n) || n <= 0 ? null : n;
+  const stores = state.stores.map(s =>
+    s.id === state.currentStoreId ? { ...s, budget } : s
+  );
+  saveStores(stores);
+  setState({ stores, editingBudget: false, budgetDraft: "" });
+}
+
+function completeShop() {
+  const stores = state.stores.map(s => {
+    if (s.id !== state.currentStoreId) return s;
+    return { ...s, items: s.items.filter(i => !i.checked), budget: null, completions: s.completions + 1 };
+  });
+  saveStores(stores);
+  setState({ stores, showConfirm: false });
+}
+
+function submitItem() {
+  const inp = document.getElementById("new-item-input");
+  if (!inp) return;
+  const name = inp.value.trim();
+  if (!name) return;
+  const stores = state.stores.map(s => {
+    if (s.id !== state.currentStoreId) return s;
+    return { ...s, items: [...s.items, { id: uid(), name, checked: false }] };
+  });
+  saveStores(stores);
+  setState({ stores, showAddItem: false });
+}
+
+function submitCreateStore() {
+  const nameEl = document.getElementById("new-store-name");
+  const noteEl = document.getElementById("new-store-note");
+  if (!nameEl) return;
+  const name = nameEl.value.trim();
+  if (!name) return;
+  const note = noteEl ? noteEl.value.trim() : "";
+  const newStore = {
+    id: uid(), name, note,
+    color: state.selectedColor,
+    items: [], budget: null, completions: 0
+  };
+  const stores = [...state.stores, newStore];
+  saveStores(stores);
+  setState({ stores, showCreate: false, selectedColor: CARD_COLORS[0] });
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+// ── Boot ──
+render();
+</script>
+</body>
+</html>
